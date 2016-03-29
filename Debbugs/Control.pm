@@ -1116,7 +1116,7 @@ sub set_submitter {
 	}
 	else {
 	    if (defined $data->{originator} and length($data->{originator})) {
-		$action= "Changed $config{bug} submitter to '$param{submitter}' from '$data->{originator}'";
+		$action= "Changed $config{bug} submitter to '$param{submitter}' from '$data->{originator}'.";
 		$notify_old_submitter = 1;
 	    }
 	    else {
@@ -1231,7 +1231,7 @@ sub set_forwarded {
 		$action= "Unset $config{bug} forwarded-to-address";
 	    }
 	    elsif (defined $data->{forwarded} and length($data->{forwarded})) {
-		$action= "Changed $config{bug} forwarded-to-address to '$param{forwarded}' from '$data->{forwarded}'";
+		$action= "Changed $config{bug} forwarded-to-address to '$param{forwarded}' from '$data->{forwarded}'.";
 	    }
 	    else {
 		$action= "Set $config{bug} forwarded-to-address to '$param{forwarded}'.";
@@ -1316,7 +1316,7 @@ sub set_title {
 	}
 	else {
 	    if (defined $data->{subject} and length($data->{subject})) {
-		$action= "Changed $config{bug} title to '$param{title}' from '$data->{subject}'";
+		$action= "Changed $config{bug} title to '$param{title}' from '$data->{subject}'.";
 	    } else {
 		$action= "Set $config{bug} title to '$param{title}'.";
 	    }
@@ -2963,19 +2963,19 @@ sub clone_bug {
     # bugs that this bug is blocking are also blocked by the new clone(s)
     for my $bug (split ' ', $data->{blocks}) {
 	for my $new_bug (@new_bugs) {
-	    set_blocks(bug => $new_bug,
-		       block => $bug,
+	    set_blocks(bug => $bug,
+                   block => $new_bug,
 		       hash_slice(%param,
 				  keys %common_options,
 				  keys %append_action_options),
 		      );
 	}
     }
-    # bugs that this bug is blocked by are also blocking the new clone(s)
+    # bugs that are blocking this bug are also blocking the new clone(s)
     for my $bug (split ' ', $data->{blockedby}) {
 	for my $new_bug (@new_bugs) {
-	    set_blocks(bug => $bug,
-		       block => $new_bug,
+	    set_blocks(bug => $new_bug,
+                   block => $bug,
 		       hash_slice(%param,
 				  keys %common_options,
 				  keys %append_action_options),
