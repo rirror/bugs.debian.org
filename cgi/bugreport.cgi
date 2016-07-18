@@ -228,7 +228,7 @@ if ( $mbox ) {
      binmode(STDOUT,":raw");
      my $date = strftime "%a %b %d %T %Y", localtime;
      if (@records > 1) {
-	 print $q->header(-type => "text/plain",
+	 print $q->header(-type => "application/mbox",
 			  -cache_control => 'public, max-age=600',
 			  -etag => $etag,
 			  content_disposition => qq(attachment; filename="bug_${ref}.mbox"),
@@ -316,7 +316,7 @@ else {
 	 $msg_num++;
 	 ## allow this to be cached for a week
 	 print "Status: 200 OK\n";
-	 print "Cache-control: public, max-age=604800\n";
+	 print "Cache-Control: public, max-age=604800\n";
 	 print "Etag: $etag\n";
 	  print handle_email_message($records[0],
 				     ref => $ref,
