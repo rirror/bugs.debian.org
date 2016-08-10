@@ -102,7 +102,7 @@ END
      print '<a href="'.html_escape(munge_url($this,collapse=>$cgi_var{collapse}?0:1)).
 	  '">['.($cgi_var{collapse}?"Don't c":'C').'ollapse]</a> ';
      print '<a href="'.html_escape(munge_url($this,dot=>1)).
-	  '">[Dot]</a><br/>';
+	  '">[Dot]</a><br>';
      print '<img src="'.html_escape(munge_url($this,info=>0)).'">';
      print <<END;
 </body>
@@ -232,7 +232,6 @@ if ($cgi_var{collapse}) {
      # nodes that can be collapsed are those that have one child
      # are in the same state as their parent, and are not in a suite
      foreach my $key (keys %reversed_nodes) {
-	  my ($short_version) = $key =~ m{/(.+)$};
      	  if (not exists $version_to_dist{$key}
 	      and @{$reversed_nodes{$key}} <= 1
 	      and defined $version->{parent}{$key}
@@ -282,7 +281,6 @@ if ($cgi_var{collapse}) {
 }
 
 foreach my $key (keys %all_states) {
-     my ($short_version) = $key =~ m{/(.+)$};
      next if exists $collapsed_nodes{$key};
      next if $cgi_var{ignore_boring} and (not defined $all_states{$key}
 					  or $all_states{$key} eq 'absent');

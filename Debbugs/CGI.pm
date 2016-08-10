@@ -34,7 +34,7 @@ None known.
 use warnings;
 use strict;
 use vars qw($VERSION $DEBUG %EXPORT_TAGS @EXPORT_OK @EXPORT);
-use base qw(Exporter);
+use Exporter qw(import);
 
 use Debbugs::URI;
 use HTML::Entities;
@@ -962,7 +962,7 @@ sub calculate_etags {
 		     );
     my @additional_data = @{$param{additional_data}};
     for my $file (@{$param{files}}) {
-	my $st = stat($file) or warn "Unable to stat $file:: $!";
+	my $st = stat($file) or warn "Unable to stat $file: $!";
 	push @additional_data,$st->mtime;
 	push @additional_data,$st->size;
     }
