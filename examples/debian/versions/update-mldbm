@@ -15,7 +15,7 @@ if [ -e versions_time.idx ]; then
 fi;
 
 ../bin/build-versions-db versions.idx.new versions_time.idx.new \
-			 /srv/bugs.debian.org/versions/indices/ftp \
+			 /etc/debbugs/indices/ftp \
 			 oldstable stable proposed-updates \
 			 testing \
 			 testing-proposed-updates \
