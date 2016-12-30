@@ -5,7 +5,7 @@ cd /org/bugs.debian.org/versions/indices
 
 ARCHIVES='ftp' # security -- should be included too, but too difficult to deal with
 
-../bin/build-versions-db versions.idx.new versions_time.idx.new \
+../bin/build-versions-db versions.idx versions_time.idx \
 			 /etc/debbugs/indices/ftp \
 			 oldstable stable proposed-updates \
 			 testing \
