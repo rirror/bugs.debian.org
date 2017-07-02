@@ -228,6 +228,8 @@ for my $phline (@bodylines)
     last if $phline !~ m/^([\w-]+):\s*(\S.*)/;
     my ($fn, $fv) = ($1, $2);
     $fv =~ s/\s*$//;
+    # pluralize tag/usertag
+    $fn = $fn.'s' if $fn =~ /^(?:tag|usertag)$/;
     print {$debugfh} ">$fn|$fv|\n";
     $fn = lc $fn;
     if ($fn =~ /^control$/) {
@@ -1262,7 +1264,7 @@ sub fill_template{
 		     };
      my $hole_var = {'&bugurl' =>
 		     sub{"$_[0]: ".
-			      'http://'.$config{cgi_domain}.'/'.
+			      $config{cgi_domain}.'/'.
 				   Debbugs::CGI::bug_links(bug=>$_[0],
 							   links_only => 1,
 							  );
