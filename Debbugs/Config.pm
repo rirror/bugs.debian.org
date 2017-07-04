@@ -47,7 +47,7 @@ BEGIN {
 				 qw($gWebDomain $gHTMLSuffix $gCGIDomain $gMirrors),
 				 qw($gPackagePages $gSubscriptionDomain $gProject $gProjectTitle),
 				 qw($gMaintainer $gMaintainerWebpage $gMaintainerEmail $gUnknownMaintainerEmail),
-				 qw($gPackageTrackingDomain),
+				 qw($gPackageTrackingDomain $gUsertagPackageDomain),
 				 qw($gSubmitList $gMaintList $gQuietList $gForwardList),
 				 qw($gDoneList $gRequestList $gSubmitterList $gControlList),
 				 qw($gStrongList),
@@ -189,8 +189,9 @@ set_default(\%config,'mirrors',[]);
 =item package_pages  $gPackagePages
 
 Domain where the package pages are kept; links should work in a
-package_pages/foopackage manner. Defaults to undef, which means that
-package links will not be made.
+package_pages/foopackage manner. Defaults to undef, which means that package
+links will not be made. Should be prefixed with the appropriate protocol
+(http/https).
 
 =cut
 
@@ -214,7 +215,7 @@ Domain where where usertags of packages belong; defaults to $gPackagePages
 
 =cut
 
-set_default(\%config,'usertag_package_domain',$config{package_pages});
+set_default(\%config,'usertag_package_domain',map {defined $_?s{https?://}{}:(); $_} $config{package_pages});
 
 
 =item subscription_domain $gSubscriptionDomain
@@ -238,13 +239,13 @@ set_default(\%config,'cc_all_mails_to_addr',undef);
 =item cve_tracker $gCVETracker
 
 URI to CVE security tracker; in bugreport.cgi, CVE-2001-0002 becomes
-linked to http://$config{cve_tracker}CVE-2001-002
+linked to $config{cve_tracker}CVE-2001-002
 
-Default: security-tracker.debian.org/tracker/
+Default: https://security-tracker.debian.org/tracker/
 
 =cut
 
-set_default(\%config,'cve_tracker','security-tracker.debian.org/tracker/');
+set_default(\%config,'cve_tracker','https://security-tracker.debian.org/tracker/');
 
 
 =back
