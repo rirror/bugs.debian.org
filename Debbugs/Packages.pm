@@ -72,13 +72,14 @@ our $_pkgcomponent;
 our $_srcpkg;
 sub getpkgsrc {
     return $_pkgsrc if $_pkgsrc;
-    return {} unless defined $Debbugs::Packages::gPackageSource;
+    return {} unless defined $config{package_source} and
+	length $config{package_source};
     my %pkgsrc;
     my %pkgcomponent;
     my %srcpkg;
 
     my $fh = IO::File->new($config{package_source},'r')
-	or die("Unable to open $config{package_source} for reading: $!");
+	or croak("Unable to open $config{package_source} for reading: $!");
     while(<$fh>) {
 	next unless m/^(\S+)\s+(\S+)\s+(\S.*\S)\s*$/;
 	my ($bin,$cmp,$src)=($1,$2,$3);
