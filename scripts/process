@@ -180,7 +180,9 @@ for my $hdr (@headerlines) {
     $_ = $hdr;
     s/\n\s/ /g;
     finish() if m/^x-loop: (\S+)$/i && $1 eq "$gMaintainerEmail";
-    my $ins = !m/^(?:(?:subject|reply-to|return-path|mail-followup-to):
+    my $ins = !m/^(?:(?:subject|reply-to|return-path|
+			 mail-followup-to|
+			 references):
 		 |From\s|X-Debbugs-)/xi;
     $fwd .= encode_utf8($hdr)."\n" if $ins;
     # print {$debugfh} ">$_<\n";
@@ -225,7 +227,10 @@ for my $phline (@bodylines)
     # Fixes #488554
     $phline =~ s/\xef\xbb\xbf//g;
     $phline =~ s/\N{U+FEFF}//g;
-    last if $phline !~ m/^([\w-]+):\s*(\S.*)/;
+    last if $phline !~ m/^([\w-]+): # psuedoheader
+			 (?:\s|\N{U+00A0})* # zero or more spaces, including
+                                            # non-breaking space
+			 (\S.*)/x; # pseudoheader value
     my ($fn, $fv) = ($1, $2);
     $fv =~ s/\s*$//;
     # pluralize tag/usertag
@@ -809,6 +814,12 @@ if (length($resentccval)) {
     $resentcc= "Resent-CC: $resentccval\n"; 
 }
 
+my $referencesval = join(' ',grep {defined $_} $header{'references'},$data->{msgid});
+my $references = '';
+if (!$newref && length($referencesval)) {
+    $references = "References: $referencesval\n";
+}
+
 my $common_headers='';
 {
     my @tmp = @common_headers;
@@ -828,7 +839,7 @@ Resent-Sender: $gMaintainerEmail
 X-$gProject-PR-Message: report $ref
 X-$gProject-PR-Package: $data->{package}
 X-$gProject-PR-Keywords: $data->{keywords}
-${source_pr_header}
+${references}${source_pr_header}
 END
     chomp $enc_msg;
     $enc_msg = encode_utf8($enc_msg).$fwd."\n";
@@ -851,7 +862,7 @@ Resent-Sender: $gMaintainerEmail
 X-$gProject-PR-Message: $report_followup $ref
 X-$gProject-PR-Package: $data->{package}
 X-$gProject-PR-Keywords: $data->{keywords}
-${source_pr_header}
+${references}${source_pr_header}
 END
     chomp $enc_msg;
     $enc_msg = encode_utf8($enc_msg).$fwd."\n";
@@ -885,7 +896,7 @@ Resent-Sender: $gMaintainerEmail
 ${common_headers}X-$gProject-PR-Message: $report_followup $ref
 X-$gProject-PR-Package: $data->{package}
 X-$gProject-PR-Keywords: $data->{keywords}
-${source_pr_header}
+${references}${source_pr_header}
 END
     chomp $enc_msg;
     $enc_msg = encode_utf8($enc_msg).$fwd."\n";
