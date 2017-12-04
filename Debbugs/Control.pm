@@ -379,6 +379,7 @@ sub set_blocks {
     # throw an error if we are setting the blockers and there is a bad
     # blocker
     if (keys %bad_blockers and $mode eq 'set') {
+	__end_control(%info);
 	croak "Unknown blocking bug(s):".join(', ',keys %bad_blockers).
 	    keys %ok_blockers?'':" and no known blocking bug(s)";
     }
@@ -387,6 +388,7 @@ sub set_blocks {
     if (not keys %ok_blockers and $mode ne 'set') {
 	print {$transcript} "No valid blocking bug(s) given; not doing anything\n";
 	if (keys %bad_blockers) {
+	    __end_control(%info);
 	    croak "Unknown blocking bug(s):".join(', ',keys %bad_blockers);
 	}
 	__end_control(%info);
@@ -410,6 +412,7 @@ sub set_blocks {
     @bugs{@bugs} = (1) x @bugs;
     for my $blocker (@change_blockers) {
 	if ($bugs{$blocker}) {
+	    __end_control(%info);
 	    croak "It is nonsensical for a bug to block itself (or a merged partner): $blocker";
 	}
     }
@@ -2070,9 +2073,11 @@ sub set_merged {
 		print {$transcript} "$change->{field} of #$change->{bug} is '$change->{text_orig_value}' not '$change->{text_value}'\n";
 	    }
 	    if ($attempts > 0) {
+		__end_control(%info);
 		croak "Some bugs were altered while attempting to merge";
 	    }
 	    else {
+		__end_control(%info);
 		croak "Did not alter merged bugs";
 	    }
 	}
@@ -2084,6 +2089,7 @@ sub set_merged {
 		$param{show_bug_info} and not __internal_request(1);
 	    $bug_info_shown{$change_bug} = 1;
 	    __allow_relocking($param{locks},[keys %data]);
+	    eval {
 	    for my $change (@{$changes->{$change_bug}}) {
 		if ($change->{field} eq 'blockedby' or $change->{field} eq 'blocks') {
 		    my %target_blockedby;
@@ -2119,6 +2125,12 @@ sub set_merged {
 						     keys %append_action_options),
 					 );
 		}
+	    }
+	};
+	    if ($@) {
+		__disallow_relocking($param{locks});
+		__end_control(%info);
+		croak "Failure while trying to adjust bugs, please report this as a bug: $@";
 	    }
 	    __disallow_relocking($param{locks});
 	    my ($data,$n_locks) =
@@ -2286,13 +2298,22 @@ sub __calculate_merge_status{
 	    $merged_bugs{$data->{bug_num}} = 1;
 	    $bugs_to_merge = 1;
 	}
+    }
+    for my $data (@{$data_a}) {
 	# the master_bug is the bug that every other bug is made to
 	# look like. However, if merge is set, tags, fixed and found
 	# are merged.
 	if ($data->{bug_num} == $master_bug) {
-	    for (qw(package forwarded severity blocks blockedby done owner summary outlook affects)) {
+	    for (qw(package forwarded severity done owner summary outlook affects)) {
 		$merge_status{$_} = $data->{$_}
 	    }
+	    # bugs which are in the newly merged set and are also
+	    # blocks/blockedby must be removed before merging
+ 	    for (qw(blocks blockedby)) {
+ 		$merge_status{$_} =
+ 		    join(' ',grep {not exists $merged_bugs{$_}}
+ 			 split / /,$data->{$_});
+ 	    }
 	}
  	if (defined $merge_status) {
  	    next unless $data->{bug_num} == $master_bug;
