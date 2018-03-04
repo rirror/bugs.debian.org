@@ -63,6 +63,8 @@ debbugs (2.6.0~exp1) UNRELEASED; urgency=low
     #871784) Thanks to Ridier 'OdyX' Raboud
   * Use foo <bar@baz.com> instead of bar@baz.com (foo) for From: (Closes:
     #881903). Thanks to Michael Stapelberg.
+  * Add rel="canonical" links to bug pages (Closes: #890338). Thanks to Chris
+    Lamb.
 
   [ Niels Thykier ]
   * quitcgi() now returns 400/500 status codes instead of 200 (Closes: #584922)
@@ -120,12 +122,13 @@ debbugs (2.6.0~exp1) UNRELEASED; urgency=low
     + usr/share/man/man3/Debbugs::Status.3pm.gz
   * Raise Standards to 3.9.4 (after fixing several lintian issues).
   * Pass param bug=<NNN> to bugreport.html call in bugreport.cgi.
+  * Fix blocks/blockedby of archived bugs (Closes: #892060)
 
   [Frank Lichtenheld]
   * Fix broken link in changed forwarded-to address (closes: #782740)
   * Fix package links in reassigned message (closes: #767327)
 
- --
+ -- Don Armstrong <don@debian.org>  Mon, 26 Feb 2018 11:31:48 -0800
 
 debbugs (2.4.2~exp1) experimental; urgency=low
 

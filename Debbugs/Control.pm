@@ -364,7 +364,7 @@ sub set_blocks {
 	next if $ok_blockers{$blocker} or $bad_blockers{$blocker};
 	my $data = read_bug(bug=>$blocker,
 			   );
-	if (defined $data and not $data->{archive}) {
+	if (defined $data and not $data->{archived}) {
 	    $data = split_status_fields($data);
 	    $ok_blockers{$blocker} = 1;
 	    my @merged_bugs;
@@ -380,8 +380,8 @@ sub set_blocks {
     # blocker
     if (keys %bad_blockers and $mode eq 'set') {
 	__end_control(%info);
-	croak "Unknown blocking bug(s):".join(', ',keys %bad_blockers).
-	    keys %ok_blockers?'':" and no known blocking bug(s)";
+	croak "Unknown/archived blocking bug(s):".join(', ',keys %bad_blockers).
+	    keys %ok_blockers?'':" and no good blocking bug(s)";
     }
     # if there are no ok blockers and we are not setting the blockers,
     # there's an error.
@@ -389,7 +389,7 @@ sub set_blocks {
 	print {$transcript} "No valid blocking bug(s) given; not doing anything\n";
 	if (keys %bad_blockers) {
 	    __end_control(%info);
-	    croak "Unknown blocking bug(s):".join(', ',keys %bad_blockers);
+	    croak "Unknown/archived blocking bug(s):".join(', ',keys %bad_blockers);
 	}
 	__end_control(%info);
 	return;

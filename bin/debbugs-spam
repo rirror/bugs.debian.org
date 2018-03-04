@@ -78,11 +78,25 @@ id
 Mark messages as ham if there is a regex match to subject or message
 id
 
+=item B<learn>
+
+Learn from messages which are ham/spam
+
 =back
 
 
 =head1 EXAMPLES
 
+Start spamd:
+
+  /usr/sbin/spamd --socketpath=/home/debbugs/spamd_socket \
+      --nouser-config --cf='include /home/debbugs/.spamassassin/user_prefs' \
+      --cf='allow_user_rules 1' --allow-tell;
+
+Then score bugs:
+
+  debbugs-spam --spamc-opts '-U' --spamc-opts '/home/debbugs/spamd_socket' \
+      score 859123;
 
 =cut
 
@@ -130,6 +144,8 @@ my %subcommands =
                     },
      'mark-ham' => {function => \&mark_ham,
                    },
+     'learn' => {function => \&learn,
+                },
      'help' => {function => sub {pod2usage({verbose => 2});}}
     );
 
@@ -186,10 +202,10 @@ sub mark_it {
                        my $body = $rec->{text};
                        my ($subject) = $body =~ /^Subject: *(.+)$/mi;
                        my $is_match = 0;
-                       if ($subject =~ /\Q$regex\E/) {
+                       if ($subject =~ /$regex/) {
                            $is_match = 1;
                        }
-                       if ($mid =~ /\Q$regex\E/) {
+                       if ($mid =~ /$regex/) {
                            $is_match = 1;
                        }
                        if ($is_match) {
@@ -204,6 +220,40 @@ sub mark_it {
                    $bug_num
                   );
         $spam->save();
+    }
+}
+
+sub learn {
+    my ($options,$opts,$config,$argv) = @_;
+    for my $bug_num (@{$argv}) {
+        my $spam = Debbugs::Log::Spam->new(bug_num => $bug_num) or
+            die "Unable to open bug log spam for $bug_num";
+        foreachmsg(sub {
+                       my ($bn,$rec,$mid) = @_;
+                       my $score;
+                       if ($spam->is_spam($mid)) {
+                           $score //=
+                               spam_score($rec,$options->{spamc},
+                                          [@{$options->{spamc_opts}},
+                                           '-L','spam'
+                                          ]
+                                         );
+                           print STDERR "learning spam" if $DEBUG;
+                       } elsif ($spam->is_ham($mid)) {
+                           $score //=
+                               spam_score($rec,$options->{spamc},
+                                          [@{$options->{spamc_opts}},
+                                           '-L','ham'
+                                          ]
+                                         );
+                           print STDERR "learning ham" if $DEBUG;
+                       } else {
+                           print STDERR "not learning" if $DEBUG;
+                       }
+                       print STDERR " from $mid" if $DEBUG;
+                   },
+                   $bug_num
+                  );
     }
 }
 
@@ -298,6 +348,9 @@ sub spam_score {
     my ($score,$threshold,$report);
     my $is_spam = 0;
     eval {
+        $report = '';
+        $score = 0;
+        $threshold = 5;
         my ($spamc_in,$spamc_out);
         my $old_sig = $SIG{"PIPE"};
         $SIG{"PIPE"} = sub {
@@ -305,7 +358,7 @@ sub spam_score {
         };
         my $childpid =
             open3($spamc_in,$spamc_out,0,
-                  $spamc,'-E',@{$spamc_opts}) or
+                  $spamc,'-E','--headers',@{$spamc_opts}) or
                       die "Unable to fork spamc: $!";
         if (not $childpid) {
             die "Unable to fork spamc";
@@ -313,19 +366,24 @@ sub spam_score {
         print {$spamc_in} $record->{text};
         close($spamc_in) or die "Unable to close spamc_in: $!";
         waitpid($childpid,0);
-        if ($? >> 8) {
+        my $exit_code = $? >> 8;
+        if ($exit_code) {
             $is_spam = 1;
         }
-        my ($first_line,@report) = <$spamc_out>;
-        if ($DEBUG) {
-            print STDERR "[$?;".($? >> 8)."] ";
-            print STDERR $first_line,@report;
-            print STDERR " ";
+        while (<$spamc_out>) {
+            if (/^X-Spam/) {
+                $report .= $_;
+                if (/^X-Spam-Status: (Yes|No), score=(-?[\d\.]+) required=(-?[\d\.]+)/) {
+                    $threshold = $3;
+                    $score = $2;
+                }
+            }
+            if (/^\s*$/) {
+                last;
+            }
         }
-        if (defined $first_line) {
-            chomp $first_line;
-            ($score,$threshold) = $first_line =~ m{^(-?[\d\.]+)/(-?[\d\.]+)$};
-            $report = join('',@report);
+        if ($DEBUG) {
+            print STDERR "[$exit_code] [$score/$threshold]\n$report\n";
         }
         close($spamc_out);
         $SIG{"PIPE"} = $old_sig;
